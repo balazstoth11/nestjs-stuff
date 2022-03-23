@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, Patch, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseIntPipe, Patch, Post, ValidationPipe } from "@nestjs/common";
 import { CreateEventDto } from "../dto/create-event.dto";
 import { Event } from "../entity/event.entity";
 import { UpdateEventDto } from "../dto/update-event.dto";
@@ -40,16 +40,8 @@ export class EventsController {
         });
     }
 
-    /**
-     * Find a better/more generalized workaround for this mess
-     * @param id 
-     * @returns 
-     */
     @Get("/:id")
-    async findOne(@Param("id") id: number): Promise<Event> {
-        if (isNaN(id) || id != parseInt(id.toString())) {
-            throw new BadRequestException("ID must be an integer");
-        }
+    async findOne(@Param("id", ParseIntPipe) id: number): Promise<Event> {
         const ret = await this.repository.findOne(id);
         if (!ret) {
             throw new NotFoundException();
@@ -65,8 +57,10 @@ export class EventsController {
         });
     }
 
-    @Patch("/:id(\\d+)")
-    async update(@Param("id") id: number, @Body() input: UpdateEventDto): Promise<Event> {
+    @Patch("/:id")
+    async update(
+        @Param("id", ParseIntPipe) id: number,
+        @Body() input: UpdateEventDto): Promise<Event> {
         const event = await this.findOne(id);
 
         return await this.repository.save({

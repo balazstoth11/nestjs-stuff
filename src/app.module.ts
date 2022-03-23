@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { rootCertificates } from 'tls';
+import { AppController } from './app.controller';
+import { AppDummy } from './app.dummy';
+import { AppJapanService } from './app.japan.service';
 import { AppService } from './app.service';
-import { EventsController } from './controller/events.controller';
-import { Event } from './entity/event.entity';
+import { EventsController } from './events/controller/events.controller';
+import { Event } from './events/entity/event.entity';
+import { EventsModule } from './events/events.module';
 
 @Module({
   //Find a way to read this from a prop file or something
@@ -17,9 +21,19 @@ import { Event } from './entity/event.entity';
     entities: [Event],
     synchronize: true, //DO NOT USE IN PROD
   }),
-  TypeOrmModule.forFeature([Event]) //init the repositories
+    EventsModule
   ],
-  controllers: [EventsController],
-  providers: [AppService],
+  controllers: [AppController],
+  providers: [{
+    provide: AppService,
+    useClass: AppJapanService
+  }, {
+    provide: 'APP_NAME',
+    useValue: 'Nest events'
+  }, {
+    provide: 'MESSAGE',
+    inject: [AppDummy],
+    useFactory: a => `${a.dummy()} factory!`
+  }, AppDummy],
 })
 export class AppModule { }
